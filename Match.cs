@@ -16,6 +16,10 @@ namespace SportsApp{
             AwayTeam=awayTeam;
             HomeScore=homeScore;
             AwayScore=awayScore;
+        }
+
+        public Match(){
+            
         }  
 
         public void ApplyResult(){

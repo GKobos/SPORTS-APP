@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.IO;
+using System.Text.Json;
 
 namespace SportsApp{
     public class SportsApp{
@@ -8,6 +10,7 @@ namespace SportsApp{
         List<Match> matches = new List<Match>();
 
         public void Run(){
+            LoadData();
             int choice;
             while(true)
             {
@@ -17,8 +20,8 @@ namespace SportsApp{
                 Console.WriteLine("2) View Teams.");
                 Console.WriteLine("3) Add a Match.");
                 Console.WriteLine("4) View Standings.");
-                Console.WriteLine("5) Advance Options.");
-                Console.WriteLine("6) View Matches.");
+                Console.WriteLine("5) View Matches.");
+                Console.WriteLine("6) Advance Options.");
 
                 choice = AreNumbers();
 
@@ -38,7 +41,6 @@ namespace SportsApp{
                     case 2:
                         ViewTeams();
                         break;
-
                     case 3:
                         AddMatch();
                         break;
@@ -46,10 +48,10 @@ namespace SportsApp{
                         ShowStandings();
                         break;
                     case 5:
-                        AdvanceOptions();
-                        break;
-                    case 6:
                         ViewMatches();
+                        break;
+                    case 6:   
+                        AdvanceOptions();
                         break;
                     default:
                         Console.WriteLine("Wrong choice!\n");
@@ -72,6 +74,7 @@ namespace SportsApp{
             }
             teams.Add(new Team(tname));
             Console.WriteLine("Team has been added!\n");
+            SaveData();
         }
 
         private void ViewTeams(){ 
@@ -158,6 +161,7 @@ namespace SportsApp{
             matches.Add(match);
 
             Console.WriteLine($"Match Recorded: {homeTeam.Name} {homeScore} - {awayScore} {awayTeam.Name}\n");
+            SaveData();
             return;
         }
 
@@ -182,13 +186,15 @@ namespace SportsApp{
                     Console.WriteLine("\n---ADVANCE OPTIONS---");
                     Console.WriteLine("0) Back to Menu.");
                     Console.WriteLine("1) Edit Team Name.");
-                    Console.WriteLine("2) Delete Team");
+                    Console.WriteLine("2) Edit Matches");
+                    Console.WriteLine("3) Delete Team");
+                    Console.WriteLine("4) Reset League");
 
                     int inputAo;
 
                     while(true){
                         inputAo = AreNumbers();
-                        if(inputAo>=0 && inputAo<=2){
+                        if(inputAo>=0 && inputAo<=4){
                             break;
                         }
                         Console.WriteLine("Your Choice is Invalid.");
@@ -202,7 +208,13 @@ namespace SportsApp{
                             EditTeam();
                             break;
                         case 2:
+                            EditMatch();
+                            break;
+                        case 3:
                             DeleteTeam();
+                            break;
+                        case 4:
+                            ResetLeague();
                             break;
                         default:
                             Console.WriteLine("Wrong choice!\n");
@@ -216,8 +228,8 @@ namespace SportsApp{
 
             Console.WriteLine("\n---EDIT TEAM---");                        
             int teamIndex;
-            bool choosingTeam = true;
-            while(choosingTeam){
+            bool flag = true;
+            while(flag){
                 Console.WriteLine("Select the Team that you want to Edit.");
                                     
                 for(int i=0; i<teams.Count; i++){
@@ -237,12 +249,57 @@ namespace SportsApp{
                     }
                     editTeam.Name=newTeamName;        
                     Console.WriteLine($"Team {editTeam.Name} updated succesfully!\n");
-                    choosingTeam = false;
+                    flag = false;
                 }
                 else{
                     Console.WriteLine("Wrong choice.\n");    
                 }
-            }   
+            }
+            SaveData(); 
+        }
+
+        private void EditMatch(){
+            Console.WriteLine("\n---EDIT MATCH---");
+            if(matches.Count==0){
+                Console.WriteLine("No Matches Added Yet!");
+            }
+            else{
+                int matchIndex;
+                bool flag = true;
+                while(flag){
+                    ShowMatches();
+                    Console.WriteLine("Select the Match that you Want to Edit.");
+                    matchIndex=AreNumbers();
+                    if(matchIndex>=1 && matchIndex<=matches.Count){
+                        Match editMatch = matches[matchIndex-1];
+                        Console.WriteLine($"\nChoosed Match to Edit: {editMatch.HomeTeam.Name} {editMatch.HomeScore} - {editMatch.AwayScore} {editMatch.AwayTeam.Name}");
+                        Console.WriteLine("Select what you Want to Edit from the Match.");
+                        Console.WriteLine("0) Back to Previous Menu.");
+                        Console.WriteLine("1) Change The Score of the HomeTeam.");
+                        Console.WriteLine("2) Change The Score of the AwayTeam.");
+                        int choice = AreNumbers();
+                        switch(choice){
+                            case 0:
+                                flag=false;
+                                break;
+                            case 1:
+                                HomeTeamScoreEdit(editMatch);
+                                flag=false;
+                                break;
+                            case 2:
+                                AwayTeamScoreEdit(editMatch);
+                                flag=false;
+                                break;
+                            default:
+                                Console.WriteLine("Wrong Choice.");
+                                break;
+                        }
+                    }
+                    else{
+                        Console.WriteLine("Wrong Match Choice.");
+                    }
+                }
+            }
         }
 
         private void DeleteTeam(){
@@ -293,16 +350,90 @@ namespace SportsApp{
                     Console.WriteLine("Your Choice is Invalid.");
                 }
             }
+            SaveData();
+        }
+
+        private void ResetLeague(){
+            Console.WriteLine("\n---RESET LEAGUE---");
+            if(teams.Count==0 && matches.Count==0){
+                Console.WriteLine("No Data to Reset.");
+            }
+            else{
+                while(true){
+                    Console.WriteLine("Are you Sure that you Want to Reset the League?(y/n)");
+                    string answer = AreLetters();
+                    if(answer.ToLower()=="y"){
+                        matches.Clear();
+                        foreach(var team in teams){
+                            team.UpdateRecord(0, 0, 0);
+                            team.GoalsFor = 0;
+                            team.GoalsAgainst = 0;
+                            team.GamesPlayed = 0;
+                        }
+                        Console.WriteLine("League has been RESETED successfully!");
+                        break;
+                    }
+                    else if(answer.ToLower()=="n"){
+                        Console.WriteLine("Reset Cancelled.");
+                        break;
+                    }
+                    else{
+                        Console.WriteLine("Wrong Answer.");
+                    }
+                }
+            }
+            SaveData();
+        }
+
+        private void HomeTeamScoreEdit(Match match){
+            Console.WriteLine("\n---HOME TEAM SCORE EDIT---");
+            Console.WriteLine($"\nChoosed Match to Edit: {match.HomeTeam.Name} {match.HomeScore} - {match.AwayScore} {match.AwayTeam.Name}");
+            match.UndoResult();
+            int newScore;
+            while(true)
+            {
+                Console.WriteLine($"Enter New Score for {match.HomeTeam.Name}: ");
+                newScore = AreNumbers();
+                if(newScore >= 0)
+                    break;
+                Console.WriteLine("Score cannot be negative!");
+            }
+            Match updatedMatch = new Match(match.HomeTeam, match.AwayTeam, newScore, match.AwayScore);
+            updatedMatch.ApplyResult();
+
+            matches[matches.IndexOf(match)] = updatedMatch;
+            Console.WriteLine("Home Team Score Updated Successfully!");
+            SaveData();
+        }
+
+        private void AwayTeamScoreEdit(Match match){
+            Console.WriteLine("\n---AWAY TEAM SCORE EDIT---");
+            Console.WriteLine($"\nChoosed Match to Edit: {match.HomeTeam.Name} {match.HomeScore} - {match.AwayScore} {match.AwayTeam.Name}");
+            match.UndoResult();
+            int newScore;
+            while(true)
+            {
+                Console.WriteLine($"Enter New Score for {match.AwayTeam.Name}: ");
+                newScore = AreNumbers();
+                if(newScore >= 0)
+                    break;
+                Console.WriteLine("Score cannot be negative!");
+            }
+            Match updatedMatch = new Match(match.HomeTeam, match.AwayTeam, match.HomeScore, newScore);
+            updatedMatch.ApplyResult();
+
+            matches[matches.IndexOf(match)] = updatedMatch;
+            Console.WriteLine("Away Team Score Updated Successfully!");
+            SaveData();
         }
 
         private void ViewMatches(){
+            Console.WriteLine("\n---VIEW MATCHES---");
             if(matches.Count==0){
                 Console.WriteLine("No Matches Added Yet!");
             }
             else{
-                for(int i=0; i<matches.Count; i++){
-                    Console.WriteLine($"{i+1}. {matches[i].HomeTeam.Name} {matches[i].HomeScore} - {matches[i].AwayScore} {matches[i].AwayTeam.Name}"); 
-                }
+                ShowMatches();
             }
         }
 
@@ -316,6 +447,13 @@ namespace SportsApp{
 
             foreach(var team in sortedTeams){
                 team.Show();
+            }
+        }
+
+
+        public void ShowMatches(){
+            for(int i=0; i<matches.Count; i++){
+                Console.WriteLine($"{i+1}. {matches[i].HomeTeam.Name} {matches[i].HomeScore} - {matches[i].AwayScore} {matches[i].AwayTeam.Name}"); 
             }
         }
 
@@ -343,5 +481,68 @@ namespace SportsApp{
                 }
             }
         }
+
+        private void SaveData(){
+            var data = new{
+                Teams = teams,
+                Matches = matches.Select(m => new {
+                    HomeTeamName = m.HomeTeam.Name,
+                    AwayTeamName = m.AwayTeam.Name,
+                    HomeScore = m.HomeScore,
+                    AwayScore = m.AwayScore
+                }).ToList()
+            };
+
+            string json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText("leagueData.json", json);
+        }
+
+        private void LoadData(){
+            if (!File.Exists("leagueData.json")) return;
+
+            string json = File.ReadAllText("leagueData.json");
+            var data = JsonSerializer.Deserialize<LeagueData>(json);
+
+            if (data != null){
+        
+                teams.Clear();
+                foreach(var t in data.Teams)
+                {
+                    teams.Add(new Team(t.Name)
+                    {
+                        Wins = t.Wins,
+                        Draws = t.Draws,
+                        Losses = t.Losses,
+                        Points = t.Points,
+                        GoalsFor = t.GoalsFor,
+                        GoalsAgainst = t.GoalsAgainst,
+                        GamesPlayed = t.GamesPlayed
+                    });
+                }
+
+                matches.Clear();
+                foreach(var m in data.Matches){
+                    Team home = teams.FirstOrDefault(t => t.Name == m.HomeTeamName);
+                    Team away = teams.FirstOrDefault(t => t.Name == m.AwayTeamName);
+                    if(home != null && away != null){
+                        Match match = new Match(home, away, m.HomeScore, m.AwayScore);
+                        matches.Add(match);
+                    }
+                }
+            }
+        }
     }
+
+    public class LeagueData{
+        public List<Team> Teams { get; set; }
+        public List<MatchJson> Matches { get; set; }
+    }
+
+    public class MatchJson{
+        public string HomeTeamName { get; set; }
+        public string AwayTeamName { get; set; }
+        public int HomeScore { get; set; }
+        public int AwayScore { get; set; }
+    }
+
 }

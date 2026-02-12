@@ -16,6 +16,7 @@ namespace SportsApp{
         public int GoalsDifference{
             get { return GoalsFor - GoalsAgainst; }
         }
+        public int GamesPlayed{get; set;}
 
         public Team(string tname){
             Name=tname;
@@ -25,7 +26,12 @@ namespace SportsApp{
             Points=0;
             GoalsFor=0;
             GoalsAgainst=0;
+            GamesPlayed=0;
         }       
+
+        public Team(){
+        
+        }
 
         public void ApplyMatch(int goalsScored, int goalsConceded){
 
@@ -35,13 +41,16 @@ namespace SportsApp{
             if (goalsScored > goalsConceded){
                 Wins++;
                 Points += 3;
+                GamesPlayed++;
             }
             else if (goalsScored < goalsConceded){
                 Losses++;
+                GamesPlayed++;
             }
             else{
                 Draws++;
                 Points += 1;
+                GamesPlayed++;
             }
         }
 
@@ -52,13 +61,16 @@ namespace SportsApp{
             if (goalsScored > goalsConceded){
                 Wins--;
                 Points -= 3;
+                GamesPlayed--;
             }
             else if (goalsScored < goalsConceded){
                 Losses--;
+                GamesPlayed--;
             }
             else{
                 Draws--;
                 Points -= 1;
+                GamesPlayed--;
             }
         }
 
@@ -67,11 +79,13 @@ namespace SportsApp{
             Draws = draws;
             Losses = losses;
             Points = Wins * 3 + Draws;
+
         }
 
         public void Show(){
             Console.WriteLine($"Team: {Name} | Wins: {Wins} | Draws: {Draws} | Losses: {Losses} | "+
-                              $"GF: {GoalsFor} | GA: {GoalsAgainst} | GD: {GoalsDifference} | Points: {Points}");
+                              $"GF: {GoalsFor} | GA: {GoalsAgainst} | GD: {GoalsDifference} | "+
+                              $"Games Played: {GamesPlayed} | Points: {Points}");
         }
     }
 }
