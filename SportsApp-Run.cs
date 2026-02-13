@@ -21,7 +21,7 @@ namespace SportsApp{
                 Console.WriteLine("3) Add a Match.");
                 Console.WriteLine("4) View Standings.");
                 Console.WriteLine("5) View Matches.");
-                Console.WriteLine("6) Advance Options.");
+                Console.WriteLine("6) Advanced Options.");
 
                 choice = AreNumbers();
 
